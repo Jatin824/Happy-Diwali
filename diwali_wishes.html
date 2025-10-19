@@ -1,0 +1,383 @@
+<!--
+Diwali Wishes - Single-file HTML (Open in VS Code -> Live Server)
+Features:
+- Soft gold->maroon gradient background
+- Floating sparkles (CSS particles)
+- Animated diyas (SVG + CSS glow)
+- "Open Your Surprise" button that triggers a smooth fade+scale pop-up card
+- Pop-up contains a heartfelt message and signature: "From Aapka Dusht"
+- Editable placeholder for recipient NAME (contenteditable)
+- Background music: an <audio> element attempts autoplay; music will reliably start when user clicks the button (due to browser autoplay policies)
+- Responsive layout and comments included
+
+How to use:
+1. Save this file as `index.html` or keep this name.
+2. Open the folder in VS Code and run Live Server (or open file in a browser).
+3. Click the "Open Your Surprise" button to reveal the pop-up. The music will play when you click.
+4. Replace the placeholder name and message as desired.
+
+If you'd like a downloadable PNG of the card or a ZIP with assets, tell me and I can add instructions or generate files.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Diwali — For My Family</title>
+  <style>
+    :root{
+      --bg1: #fff7e6; /* soft warm */
+      --bg2: #f5e6f0; /* subtle maroon-ish */
+      --gold: #d4af37;
+      --maroon: #6b0f19;
+      --card-bg: rgba(255,255,255,0.9);
+      --glass: rgba(255,255,255,0.55);
+    }
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family: 'Segoe UI', Roboto, system-ui, -apple-system, 'Helvetica Neue', Arial;
+      background: linear-gradient(135deg,var(--bg1), #fff1f0 40%, #fff7f4 60%, #fff8ed 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:2rem;
+      overflow:hidden;
+      color:var(--maroon);
+    }
+
+    /* container */
+    .stage{
+      width:min(980px,96vw);
+      height:min(700px,92vh);
+      border-radius:18px;
+      position:relative;
+      box-shadow: 0 10px 40px rgba(107,15,25,0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,250,245,0.55));
+      padding:2rem;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:1.25rem;
+      align-items:center;
+      backdrop-filter: blur(6px);
+    }
+
+    /* left area: sparkles and diyas */
+    .left{
+      position:relative;
+      min-height:380px;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:center;
+      padding:1rem 2rem;
+      gap:1.25rem;
+    }
+
+    h1{
+      font-size:clamp(1.6rem,2.6vw,2.2rem);
+      margin:0;
+      letter-spacing:0.6px;
+      color:var(--maroon);
+    }
+    p.lead{
+      margin:0;
+      opacity:0.85;
+      max-width:44ch;
+      line-height:1.5;
+    }
+
+    /* floating sparkles */
+    .sparkles{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+    }
+    .sparkle{
+      position:absolute;
+      width:8px;height:8px;border-radius:50%;
+      background:var(--gold);
+      opacity:0.9;filter:blur(0.4px);
+      transform:translate3d(0,0,0);
+      box-shadow:0 0 10px rgba(212,175,55,0.8);
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp{
+      0%{transform:translateY(0) scale(0.6);opacity:0}
+      5%{opacity:1}
+      50%{opacity:0.9}
+      100%{transform:translateY(-720px) scale(1);opacity:0}
+    }
+
+    /* diyas row */
+    .diyas{
+      display:flex;
+      gap:1rem;
+      align-items:flex-end;
+      flex-wrap:wrap;
+    }
+    .diya{
+      width:86px;height:86px;display:flex;align-items:center;justify-content:center;
+      transform-origin:center bottom;
+      animation: gentleSwing 3.6s ease-in-out infinite;
+      position:relative;
+    }
+    .diya:nth-child(2){animation-delay:0.3s}
+    .diya:nth-child(3){animation-delay:0.6s}
+    .diya svg{width:100%;height:100%}
+    @keyframes gentleSwing{
+      0%{transform:translateY(0) rotate(-1deg)}
+      50%{transform:translateY(-6px) rotate(1.2deg)}
+      100%{transform:translateY(0) rotate(-1deg)}
+    }
+
+    /* right area: card column */
+    .right{
+      display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.25rem;
+      gap:1rem;
+    }
+    .preview-card{
+      width:100%;max-width:360px;border-radius:14px;padding:1.25rem;background:var(--glass);box-shadow:0 8px 30px rgba(0,0,0,0.06);
+      display:flex;flex-direction:column;gap:0.75rem;align-items:stretch;
+    }
+    .name-field{
+      font-weight:700;font-size:1.05rem;padding:0.6rem;border-radius:8px;background:rgba(255,255,255,0.6);outline:none;border:1px dashed rgba(107,15,25,0.06);
+      color:var(--maroon);
+    }
+
+    .open-btn{
+      margin-top:0.35rem;padding:0.8rem 1rem;border-radius:12px;border:none;cursor:pointer;font-weight:600;
+      background:linear-gradient(90deg,var(--gold), #f0c94a);color:#431b16;box-shadow:0 6px 18px rgba(212,175,55,0.18);
+      transition:transform 160ms ease, box-shadow 160ms ease;
+    }
+    .open-btn:active{transform:translateY(2px)}
+
+    small.note{opacity:0.8}
+
+    /* modal pop-up card */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(9,9,9,0.35);display:flex;align-items:center;justify-content:center;
+      z-index:60;opacity:0;pointer-events:none;transition:opacity 320ms ease;
+    }
+    .modal-backdrop.open{opacity:1;pointer-events:auto}
+
+    .modal{
+      width:min(720px,94vw);max-width:700px;background:linear-gradient(180deg,rgba(255,255,255,0.96),#fff);border-radius:16px;padding:2rem;box-shadow:0 30px 80px rgba(107,15,25,0.18);
+      transform:scale(0.86);opacity:0;transition:transform 420ms cubic-bezier(.15,.9,.2,1),opacity 320ms ease;
+    }
+    .modal-backdrop.open .modal{transform:scale(1);opacity:1}
+
+    .modal-inner{display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap}
+    .modal-left{flex:1;min-width:250px}
+    .modal-right{flex:1;min-width:240px}
+
+    .greeting-title{font-size:1.5rem;margin:0 0 6px 0}
+    .greeting-text{line-height:1.6;color:#5b2b2b}
+    .signature{margin-top:1.1rem;font-weight:700;color:var(--maroon)}
+
+    .close-x{position:absolute;right:18px;top:14px;border-radius:10px;background:transparent;border:none;font-size:1.1rem;cursor:pointer}
+
+    /* responsive */
+    @media (max-width:880px){
+      .stage{grid-template-columns:1fr;align-items:start;padding:1rem}
+      .right{order:-1}
+      .modal-inner{flex-direction:column}
+    }
+
+    /* small flourish */
+    .diya-glow{position:absolute;inset:auto 30% 10% 30%;pointer-events:none}
+
+  </style>
+</head>
+<body>
+  <div class="stage" role="main">
+    <div class="left">
+      <h1>Happy Diwali</h1>
+      <p class="lead">To my Shaitaan 😼 (Jerry) — may our home always be bright with laughter, warm with love, and blessed with Bappa.</p>
+
+      <div class="diyas" aria-hidden="true">
+        <!-- Diya SVGs -->
+        <div class="diya"> 
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <defs>
+              <linearGradient id="g1" x1="0" x2="1"><stop offset="0%" stop-color="#ffd77a"/><stop offset="100%" stop-color="#ffb84d"/></linearGradient>
+            </defs>
+            <g>
+              <path d="M9 38c0 0 6-10 23-10s23 10 23 10c0 0-7 12-23 12S9 38 9 38z" fill="#6b0f19" />
+              <path d="M12 42c0 0 8-7 20-7s20 7 20 7c0 0-6 8-20 8S12 42 12 42z" fill="#d4af37" opacity="0.12" />
+              <path d="M32 18c-4 7-2 12 0 14 2-2 6-6 0-14z" fill="url(#g1)" />
+              <ellipse cx="32" cy="22" rx="4" ry="2" fill="#fff7d6" opacity="0.8"/>
+            </g>
+            <g class="flame" transform="translate(10,2)">
+              <path d="M12 16c-2 5-1 8 0 9 1-1 3-3 0-9z" fill="#fff5b1"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="diya"> 
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M9 38c0 0 6-10 23-10s23 10 23 10c0 0-7 12-23 12S9 38 9 38z" fill="#4b0a11" />
+            <path d="M32 18c-4 7-2 12 0 14 2-2 6-6 0-14z" fill="#ffd77a" />
+          </svg>
+        </div>
+
+        <div class="diya"> 
+          <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M9 38c0 0 6-10 23-10s23 10 23 10c0 0-7 12-23 12S9 38 9 38z" fill="#60121a" />
+            <path d="M32 18c-4 7-2 12 0 14 2-2 6-6 0-14z" fill="#ffd96c" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="sparkles" aria-hidden="true"></div>
+    </div>
+
+    <div class="right">
+      <div class="preview-card" aria-hidden="false">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:0.85rem;color:rgba(75,10,16,0.8)">To</div>
+            <!-- editable name -->
+            <div class="name-field" contenteditable id="recipient" aria-label="Recipient name">Buddhu</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:0.8rem;color:rgba(75,10,16,0.7)">Occasion</div>
+            <div style="font-weight:700">Diwali</div>
+          </div>
+        </div>
+
+        <div style="margin-top:10px">
+          <small class="note">Yaha Dabao Buddhu</small>
+        </div>
+
+        <button class="open-btn" id="openBtn">Open Your Surprise</button>
+        <audio id="bgmusic" loop preload="auto">
+          <!-- NOTE: Replace the src with a local file or URL (MP3). Browsers may block autoplay; music will start when user clicks. -->
+          <source src="Happydiwali.mp3" type="audio/mpeg">
+        </audio>
+        <small style="display:block;margin-top:8px;opacity:0.8"></small>
+      </div>
+
+      <div style="text-align:center;color:rgba(75,10,16,0.75);font-size:0.9rem">
+        <div style="font-weight:600">From Aapka Dusht 💛 </div>
+        <div style="margin-top:6px;opacity:0.8">Designed with ❤️</div>
+      </div>
+    </div>
+
+    <!-- modal popup -->
+    <div id="backdrop" class="modal-backdrop" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="greetTitle">
+        <button class="close-x" id="closeX" aria-label="Close">✕</button>
+        <div class="modal-inner">
+          <div class="modal-left">
+            <h2 id="greetTitle" class="greeting-title">Happy Diwali!</h2>
+            <p class="greeting-text" id="cardText">May this Diwali bring endless happiness, health, and prosperity to our family. Let’s keep spreading love and light—today and always.</p>
+            <div class="signature">From Aapka Dusht 💛</div>
+          </div>
+          <div class="modal-right" style="display:flex;align-items:center;justify-content:center;flex-direction:column">
+            <!-- small visual: ornamental diya + confetti -->
+            <div style="width:220px;height:220px;border-radius:12px;background:linear-gradient(180deg,rgba(212,175,55,0.12),rgba(107,15,25,0.02));display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 12px rgba(255,255,255,0.18);">
+              <svg width="140" height="140" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <path d="M9 38c0 0 6-10 23-10s23 10 23 10c0 0-7 12-23 12S9 38 9 38z" fill="#60121a" />
+                <path d="M32 18c-4 7-2 12 0 14 2-2 6-6 0-14z" fill="#ffd96c" />
+              </svg>
+            </div>
+            <div style="font-size:0.8rem;margin-top:10px;opacity:0.85;text-align:center">May our home be full of light and warmth.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // Generate sparkles programmatically for the visual background
+  const sparklesContainer = document.querySelector('.sparkles');
+  const sparkleCount = Math.min(Math.max(Math.floor(window.innerWidth/18),20),48);
+  for(let i=0;i<sparkleCount;i++){
+    const s = document.createElement('div');
+    s.className='sparkle';
+    // random positions
+    const left = Math.random()*100;
+    const size = 6 + Math.random()*10;
+    s.style.left = left + '%';
+    s.style.bottom = (-20 - Math.random()*200) + 'px';
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.animationDuration = (6 + Math.random()*8) + 's';
+    s.style.opacity = (0.6 + Math.random()*0.6);
+    s.style.transform = 'translateY(0)';
+    s.style.filter = 'blur(' + (Math.random()*1.6) + 'px)';
+    sparklesContainer.appendChild(s);
+  }
+
+  // Modal open/close logic and music handling
+  const openBtn = document.getElementById('openBtn');
+  const backdrop = document.getElementById('backdrop');
+  const closeX = document.getElementById('closeX');
+  const audio = document.getElementById('bgmusic');
+  const recipient = document.getElementById('recipient');
+
+
+  // ensure recipient has accessible name for screen readers
+  recipient.addEventListener('input', ()=>{ recipient.setAttribute('aria-label', 'Recipient: '+recipient.innerText); });
+
+  function openCard(){
+    backdrop.classList.add('open');
+    backdrop.setAttribute('aria-hidden','false');
+    // try to play music - browsers require user gesture
+    audio.play().catch(()=>{
+      // autoplay failed; keep audio paused until allowed
+      console.log('Autoplay prevented — will start on user interaction.');
+    });
+  }
+  function closeCard(){
+    backdrop.classList.remove('open');
+    backdrop.setAttribute('aria-hidden','true');
+    audio.pause();
+    audio.currentTime = 0;
+  }
+
+  openBtn.addEventListener('click',(e)=>{
+    // personalize message with name if provided
+    const name = recipient.innerText.trim();
+    const msg = document.getElementById('cardText');
+    if(name && name.toLowerCase() !== 'your name here'){
+      msg.innerHTML = `Dear <strong>${escapeHtml(name)}</strong>,<br><br>May this Diwali bring endless happiness, health, and prosperity to our family. Let’s keep spreading love and light—today and always.`;
+    }
+    openCard();
+  });
+
+  closeX.addEventListener('click',closeCard);
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeCard(); });
+
+  // simple escape to avoid HTML injection when editing name
+  function escapeHtml(str){
+    return str.replace(/&/g,'&amp;')
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')
+              .replace(/"/g,'&quot;')
+              .replace(/'/g,'&#039;');
+  }
+
+  // Accessibility: trap focus inside modal when open
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape' && backdrop.classList.contains('open')){
+      closeCard();
+    }
+  });
+
+  // small touch: start tiny glow animation on diyas using JS (adds subtle flicker)
+  document.querySelectorAll('.diya .flame').forEach((f, idx)=>{
+    const dur = 1800 + idx*220;
+    f.animate([
+      {transform:'translateY(0) scale(0.98)', opacity:0.9},
+      {transform:'translateY(-2px) scale(1.02)', opacity:1},
+      {transform:'translateY(0) scale(1)', opacity:0.95}
+    ],{duration:dur,iterations:Infinity,easing:'ease-in-out'});
+  });
+
+</script>
+</body>
+</html>
